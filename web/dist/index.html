@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>VM Manager</title>
+   <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+   <div class="max-w-4xl mx-auto">
+       <h1 class="text-2xl mb-6">VM Manager</h1>
+       
+       <div class="bg-white p-4 rounded shadow mb-6">
+           <h2 class="text-lg mb-2">Connection Status</h2>
+           <div id="status" class="text-gray-600">Checking...</div>
+       </div>
+
+       <div class="bg-white p-4 rounded shadow">
+           <h2 class="text-lg mb-2">VM List</h2>
+           <div id="vmList" class="text-gray-600">Loading...</div>
+       </div>
+   </div>
+
+   <script>
+       // 상태 확인
+       fetch('/api/v1/status')
+           .then(response => response.json())
+           .then(data => {
+               const statusDiv = document.getElementById('status');
+               statusDiv.innerHTML = `
+                   <div class="${data.connected ? 'text-green-600' : 'text-red-600'}">
+                       Connection: ${data.connected ? 'Connected' : 'Disconnected'}
+                   </div>
+                   ${data.hostname ? `<div>Hostname: ${data.hostname}</div>` : ''}
+               `;
+           })
+           .catch(error => {
+               document.getElementById('status').innerHTML = 
+                   `<div class="text-red-600">Error: ${error.message}</div>`;
+           });
+
+       // VM 목록 가져오기
+       fetch('/api/v1/vms')
+           .then(response => response.json())
+           .then(data => {
+               const vmListDiv = document.getElementById('vmList');
+               if (data.vms && data.vms.length > 0) {
+                   vmListDiv.innerHTML = `
+                       <div class="grid grid-cols-1 gap-4">
+                           ${data.vms.map(vm => `
+                               <div class="border p-4 rounded">
+                                   <div class="font-bold">${vm.name}</div>
+                                   <div>Status: 
+                                       <span class="${
+                                           vm.state === 'running' ? 'text-green-600' : 
+                                           vm.state === 'shutoff' ? 'text-red-600' : 'text-yellow-600'
+                                       }">
+                                           ${vm.state}
+                                       </span>
+                                   </div>
+                                   <div>vCPUs: ${vm.vcpus || 'N/A'}</div>
+                                   <div>Memory: ${vm.memory_max ? `${vm.memory_max}MB` : 'N/A'}</div>
+                               </div>
+                           `).join('')}
+                       </div>
+                   `;
+               } else {
+                   vmListDiv.innerHTML = 'No VMs found';
+               }
+           })
+           .catch(error => {
+               document.getElementById('vmList').innerHTML = 
+                   `<div class="text-red-600">Error: ${error.message}</div>`;
+           });
+           
+   </script>
+</body>
+</html>
