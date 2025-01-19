@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file,CMakeFiles/udp_iaas.dir/link.d CMakeFiles/udp_iaas.dir/src/main.cpp.o CMakeFiles/udp_iaas.dir/src/LibvirtConnection.cpp.o CMakeFiles/udp_iaas.dir/src/Domain.cpp.o -o udp_iaas  -lvirt
