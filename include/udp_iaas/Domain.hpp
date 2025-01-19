@@ -24,9 +24,9 @@ public:
 
     // VM 제어
     bool create(const DomainConfig& config);
-    bool shutdown(); //종료
-    bool destroy(); //강제종료
-    bool undefine(); //정의 제거
+    bool shutdown(); //게스트os에 종료신호
+    bool destroy(); //강제 종료
+    bool undefine(); //VM 구성 정보 libvirt에서 제거
     bool remove(); // destory + undefine
 
 

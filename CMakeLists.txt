@@ -13,9 +13,10 @@ include_directories(
 )
 
 add_executable(udp_iaas
+    src/cli/CLI.cpp
     src/main.cpp
-    src/LibvirtConnection.cpp
-    src/Domain.cpp
+    src/iaas/LibvirtConnection.cpp
+    src/iaas/Domain.cpp
 )
 
 target_link_libraries(udp_iaas PRIVATE ${LIBVIRT_LIBRARIES})

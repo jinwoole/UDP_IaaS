@@ -6,7 +6,12 @@
 
 * 설치 전 커뮤니티 저장소 활성화 필수  
 ```bash
-apk add qemu-system libvirt libvirt-dev g++ make cmake
+apk add qemu-system libvirt libvirt-dev g++ make cmake pkgconfig
+
+find /usr -name "libvirt.h"
+
+pkg-config --cflags libvirt
+
 
 rc-service libvirtd start
 

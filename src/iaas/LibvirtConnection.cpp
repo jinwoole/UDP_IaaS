@@ -39,4 +39,33 @@ void LibvirtConnection::printConnectionInfo() const {
     }
 }
 
+bool LibvirtConnection::shutdownDomain(const std::string& name) {
+    virDomainPtr d = virDomainLookupByName(conn, name.c_str());
+    if (!d) return false;
+    bool ok = (virDomainShutdown(d) == 0);
+    virDomainFree(d);
+    return ok;
+}
+
+bool LibvirtConnection::destroyDomain(const std::string& name) {
+    virDomainPtr d = virDomainLookupByName(conn, name.c_str());
+    if (!d) return false;
+    bool ok = (virDomainDestroy(d) == 0);
+    virDomainFree(d);
+    return ok;
+}
+
+bool LibvirtConnection::undefineDomain(const std::string& name) {
+    virDomainPtr d = virDomainLookupByName(conn, name.c_str());
+    if (!d) return false;
+    bool ok = (virDomainUndefine(d) == 0);
+    virDomainFree(d);
+    return ok;
+}
+
+bool LibvirtConnection::removeDomain(const std::string& name) {
+    // force-destroy, then undefine
+    return destroyDomain(name) && undefineDomain(name);
+}
+
 }  // namespace udp_iaas

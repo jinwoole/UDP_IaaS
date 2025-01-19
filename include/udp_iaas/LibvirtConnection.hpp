@@ -19,6 +19,13 @@ public:
     std::unique_ptr<Domain> createDomain(const DomainConfig& config) {
         return std::make_unique<Domain>(conn, config);
     }
+
+    bool shutdownDomain(const std::string& name);
+    bool destroyDomain(const std::string& name);
+    bool undefineDomain(const std::string& name);
+
+    // removeDomain: force-destroy + undefine
+    bool removeDomain(const std::string& name);
 };
 
 } // namespace udp_iaas
