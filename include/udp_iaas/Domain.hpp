@@ -22,8 +22,15 @@ public:
     Domain(virConnectPtr conn, const DomainConfig& config);
     ~Domain();
 
-    // 새로운 VM 생성
+    // VM 제어
     bool create(const DomainConfig& config);
+    bool shutdown(); //종료
+    bool destroy(); //강제종료
+    bool undefine(); //정의 제거
+    bool remove(); // destory + undefine
+
+
+
 
 private:
     // XML 설정 생성

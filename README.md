@@ -9,4 +9,16 @@
 apk add qemu-system libvirt libvirt-dev g++ make cmake
 
 rc-service libvirtd start
+
+#kvm 확인
+lsmod | grep kvm
+#없으면 로드
+modprobe kvm
+modprobe kvm_intel  # Intel CPU의 경우
+# or
+modprobe kvm_amd    # AMD CPU의 경우
+
+#kvm 호환성 확인
+virt-host-validate
+
 ```

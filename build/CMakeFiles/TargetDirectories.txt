@@ -1,3 +1,0 @@
-/root/UDP_IaaS/build/CMakeFiles/udp_iaas.dir
-/root/UDP_IaaS/build/CMakeFiles/edit_cache.dir
-/root/UDP_IaaS/build/CMakeFiles/rebuild_cache.dir

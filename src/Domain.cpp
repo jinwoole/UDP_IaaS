@@ -51,6 +51,41 @@ bool Domain::create(const DomainConfig& config) {
     return true;
 }
 
+bool Domain::shutdown() {
+    // virDomainShutdown: ACPI 신호를 보내 게스트 OS를 정상적으로 종료
+    if (virDomainShutdown(domain) < 0) {
+        std::cerr << "Failed to shutdown domain" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool Domain::destroy() {
+    // virDomainDestroy: 즉시 강제 종료 (kill)
+    if (virDomainDestroy(domain) < 0) {
+        std::cerr << "Failed to destroy domain" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool Domain::undefine() {
+    // virDomainUndefine: 도메인 정의 제거
+    if (virDomainUndefine(domain) < 0) {
+        std::cerr << "Failed to undefine domain" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool Domain::remove() {
+    // 먼저 강제 종료 후 정의 제거
+    if (!destroy()) {
+        return false;
+    }
+    return undefine();
+}
+
 std::string Domain::generateXML(const DomainConfig& config) const {
     // XML 생성을 위한 문자열 스트림
     std::stringstream xml;
