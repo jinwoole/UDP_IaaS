@@ -19,4 +19,7 @@ add_executable(udp_iaas
     src/iaas/Domain.cpp
 )
 
-target_link_libraries(udp_iaas PRIVATE ${LIBVIRT_LIBRARIES})
+target_link_libraries(udp_iaas PRIVATE 
+    ${LIBVIRT_LIBRARIES}
+    virt-qemu
+)

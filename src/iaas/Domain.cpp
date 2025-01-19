@@ -13,6 +13,13 @@ Domain::Domain(virConnectPtr connection, const DomainConfig& config)
     }
 }
 
+Domain::Domain(virConnectPtr conn, virDomainPtr domain) 
+    : conn(conn), domain(domain) {
+    if (!domain) {
+        throw std::runtime_error("Invalid domain pointer");
+    }
+}
+
 Domain::~Domain() {
     if (domain) {
         virDomainFree(domain);
@@ -86,42 +93,68 @@ bool Domain::remove() {
     return undefine();
 }
 
+std::string Domain::getISOPath(const std::string& isoName) {
+    std::filesystem::path execPath = std::filesystem::current_path();
+    std::filesystem::path isoPath = execPath / "iso" / isoName;
+    return isoPath.string();
+}
+
+
 std::string Domain::generateXML(const DomainConfig& config) const {
-    // XML 생성을 위한 문자열 스트림
     std::stringstream xml;
     
-    // 기본 XML 구조 생성
-    // type='kvm': KVM 하이퍼바이저 사용
-    // 각 요소들은 libvirt 문서에 정의된 스키마를 따릅니다
     xml << "<domain type='kvm'>\n"
         << "  <name>" << config.name << "</name>\n"
-        // 메모리 설정 (KB 단위로 변환)
         << "  <memory unit='KiB'>" << config.memoryMB * 1024 << "</memory>\n"
         << "  <currentMemory unit='KiB'>" << config.memoryMB * 1024 << "</currentMemory>\n"
-        // VCPU 설정
         << "  <vcpu placement='static'>" << config.vcpus << "</vcpu>\n"
         << "  <os>\n"
-        // BIOS 타입 설정
-        << "    <type arch='x86_64' machine='pc'>hvm</type>\n"
-        << "    <boot dev='hd'/>\n"
-        << "  </os>\n"
-        // CPU 설정
+        << "    <type arch='x86_64' machine='pc'>hvm</type>\n";
+    
+    // ISO가 지정된 경우 CDROM에서 부팅
+    if (config.isoPath) {
+        xml << "    <boot dev='cdrom'/>\n"
+            << "    <boot dev='hd'/>\n";
+    } else {
+        xml << "    <boot dev='hd'/>\n";
+    }
+    
+    xml << "  </os>\n"
         << "  <cpu mode='host-model'/>\n"
-        // 디바이스 설정
         << "  <devices>\n"
-        // 디스크 설정 (qcow2 포맷 사용)
+        // 하드 디스크
         << "    <disk type='file' device='disk'>\n"
         << "      <driver name='qemu' type='qcow2'/>\n"
         << "      <source file='" << config.diskPath << "'/>\n"
         << "      <target dev='vda' bus='virtio'/>\n"
-        << "    </disk>\n"
-        // 기본 네트워크 설정 (NAT 모드)
-        << "    <interface type='network'>\n"
+        << "    </disk>\n";
+
+    // ISO 마운트를 위한 CDROM 추가
+    if (config.isoPath) {
+        xml << "    <disk type='file' device='cdrom'>\n"
+            << "      <driver name='qemu' type='raw'/>\n"
+            << "      <source file='" << config.isoPath.value() << "'/>\n"
+            << "      <target dev='hdc' bus='ide'/>\n"
+            << "      <readonly/>\n"
+            << "    </disk>\n";
+    }
+
+    // 네트워크
+    xml << "    <interface type='network'>\n"
         << "      <source network='default'/>\n"
         << "      <model type='virtio'/>\n"
         << "    </interface>\n"
-        // 그래픽 설정 (VNC)
-        << "    <graphics type='vnc' port='-1' autoport='yes' listen='127.0.0.1'/>\n"
+        // 직렬 콘솔
+        << "    <serial type='pty'>\n"
+        << "      <target type='isa-serial' port='0'/>\n"
+        << "    </serial>\n"
+        << "    <console type='pty'>\n"
+        << "      <target type='serial' port='0'/>\n"
+        << "    </console>\n"
+        // VNC 설정
+        << "    <graphics type='vnc' port='-1' autoport='yes' listen='0.0.0.0'>\n"
+        << "      <listen type='address' address='0.0.0.0'/>\n"
+        << "    </graphics>\n"
         << "  </devices>\n"
         << "</domain>";
 
@@ -134,6 +167,17 @@ bool Domain::createDiskImage(const std::string& path, unsigned long sizeGB) cons
     std::string cmd = "qemu-img create -f qcow2 " + path + " " + 
                      std::to_string(sizeGB) + "G";
     
+    return (system(cmd.c_str()) == 0);
+}
+
+bool Domain::openConsole() const {
+    if (!domain) {
+        std::cerr << "Domain not initialized\n";
+        return false;
+    }
+
+    // virsh console 명령어 실행
+    std::string cmd = "virsh console " + std::string(virDomainGetName(domain));
     return (system(cmd.c_str()) == 0);
 }
 

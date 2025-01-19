@@ -1,11 +1,7 @@
-// include/udp_iaas/CLI.hpp
 #pragma once
-#include <iostream>
 #include <string>
 #include <memory>
 #include <map>
-#include <vector>
-#include <functional>
 #include "udp_iaas/LibvirtConnection.hpp"
 
 namespace udp_iaas {
@@ -22,13 +18,20 @@ public:
 class CreateCommand : public Command {
 private:
     LibvirtConnection& conn;
-
-    // 사용자로부터 VM 설정 정보 얻기
     DomainConfig getUserInput() const;
 
 public:
     explicit CreateCommand(LibvirtConnection& conn);
-    
+    void execute() override;
+    std::string help() const override;
+};
+
+// Start command
+class StartCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit StartCommand(LibvirtConnection& conn);
     void execute() override;
     std::string help() const override;
 };
@@ -40,7 +43,66 @@ private:
 
 public:
     explicit DestroyCommand(LibvirtConnection& conn);
-    
+    void execute() override;
+    std::string help() const override;
+};
+
+// Shutdown command
+class ShutdownCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit ShutdownCommand(LibvirtConnection& conn);
+    void execute() override;
+    std::string help() const override;
+};
+
+// Undefine command
+class UndefineCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit UndefineCommand(LibvirtConnection& conn);
+    void execute() override;
+    std::string help() const override;
+};
+
+// Remove command
+class RemoveCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit RemoveCommand(LibvirtConnection& conn);
+    void execute() override;
+    std::string help() const override;
+};
+
+// Console command
+class ConsoleCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit ConsoleCommand(LibvirtConnection& conn);
+    void execute() override;
+    std::string help() const override;
+};
+
+// Reboot command
+class RebootCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit RebootCommand(LibvirtConnection& conn);
+    void execute() override;
+    std::string help() const override;
+};
+
+// CDROM 관리 command
+class CDROMCommand : public Command {
+private:
+    LibvirtConnection& conn;
+public:
+    explicit CDROMCommand(LibvirtConnection& conn);
     void execute() override;
     std::string help() const override;
 };
@@ -53,7 +115,6 @@ private:
 
 public:
     CLI();
-
     void run(int argc, char* argv[]);
     void printHelp() const;
 };

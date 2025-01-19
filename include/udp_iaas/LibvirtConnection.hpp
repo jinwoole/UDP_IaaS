@@ -20,6 +20,9 @@ public:
         return std::make_unique<Domain>(conn, config);
     }
 
+    // 내부 virConnectPtr getter
+    virConnectPtr getConnection() const { return conn; }
+
     bool shutdownDomain(const std::string& name);
     bool destroyDomain(const std::string& name);
     bool undefineDomain(const std::string& name);

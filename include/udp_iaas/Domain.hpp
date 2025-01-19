@@ -2,6 +2,8 @@
 #include <libvirt/libvirt.h>
 #include <string>
 #include <memory>
+#include <optional>
+#include <filesystem>
 
 namespace udp_iaas {
 
@@ -11,6 +13,7 @@ struct DomainConfig {
     unsigned int vcpus;
     std::string diskPath;
     unsigned long diskSizeGB;
+    std::optional<std::string> isoPath;  // ISO 파일 경로 (선택적)
 };
 
 class Domain {
@@ -19,24 +22,27 @@ private:
     virConnectPtr conn;  // 참조용 포인터, 소유권 없음
 
 public:
+    // 새로운 VM 생성을 위한 생성자
     Domain(virConnectPtr conn, const DomainConfig& config);
+    
+    // 기존 VM을 래핑하기 위한 생성자
+    Domain(virConnectPtr conn, virDomainPtr domain);
+    
     ~Domain();
 
     // VM 제어
     bool create(const DomainConfig& config);
-    bool shutdown(); //게스트os에 종료신호
-    bool destroy(); //강제 종료
-    bool undefine(); //VM 구성 정보 libvirt에서 제거
-    bool remove(); // destory + undefine
+    bool shutdown();
+    bool destroy();
+    bool undefine();
+    bool remove();
+    bool openConsole() const;
 
-
+    static std::string getISOPath(const std::string& isoName);
 
 
 private:
-    // XML 설정 생성
     std::string generateXML(const DomainConfig& config) const;
-    
-    // 디스크 이미지 생성
     bool createDiskImage(const std::string& path, unsigned long sizeGB) const;
 };
 
