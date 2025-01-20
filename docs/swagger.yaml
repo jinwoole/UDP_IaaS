@@ -1,0 +1,94 @@
+basePath: /
+definitions:
+  system.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  system.ISOInfo:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  vm.CreateVMRequest:
+    properties:
+      disk_size_gb:
+        type: integer
+      image_path:
+        type: string
+      iso_path:
+        type: string
+      memory:
+        type: integer
+      name:
+        type: string
+      vcpu:
+        type: integer
+    type: object
+host: localhost:8116
+info:
+  contact: {}
+  description: API documentation for UDP IaaS
+  title: UDP IaaS API
+  version: "1.0"
+paths:
+  /system/info/iso:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all available ISO images
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of ISO images
+          schema:
+            items:
+              $ref: '#/definitions/system.ISOInfo'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/system.ErrorResponse'
+      summary: Get ISO List
+      tags:
+      - ISO
+  /vm/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new virtual machine
+      parameters:
+      - description: VM Creation Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/vm.CreateVMRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: VM created successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create new VM
+      tags:
+      - VM
+swagger: "2.0"
