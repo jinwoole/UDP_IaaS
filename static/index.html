@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM Cloud Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+        
+        .main-content {
+            margin-left: 240px;
+            padding: 20px;
+        }
+
+        .nav-link {
+            color: #333;
+            padding: 0.5rem 1rem;
+        }
+
+        .nav-link:hover {
+            background-color: #f8f9fa;
+        }
+
+        .nav-link.active {
+            color: #0d6efd;
+            background-color: #e9ecef;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .vm-card {
+            transition: transform 0.2s;
+        }
+
+        .vm-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .upload-zone {
+            border: 2px dashed #ddd;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: #0d6efd;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- 사이드바 -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar bg-light">
+        <div class="position-sticky">
+            <div class="px-3 mb-4">
+                <h4>VM Cloud Manager</h4>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('iso-management')">
+                        <i class="bi bi-disc"></i> ISO Management
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <!-- Dashboard 섹션 -->
+        <div id="dashboard" class="content-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Virtual Machines</h2>
+                <button class="btn btn-primary" onclick="showCreateVMModal()">
+                    <i class="bi bi-plus-lg"></i> Create VM
+                </button>
+            </div>
+
+            <div class="row g-4" id="vm-list-content">
+                <!-- VM 카드들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+
+        <!-- ISO Management 섹션 -->
+        <div id="iso-management" class="content-section d-none">
+            <h2 class="mb-4">ISO Management</h2>
+            
+            <div class="upload-zone mb-4" onclick="document.getElementById('iso-file').click()">
+                <i class="bi bi-cloud-upload fs-1"></i>
+                <h5 class="mt-3">Click or drag ISO files here</h5>
+                <p class="text-muted">Supported format: .iso</p>
+                <input type="file" id="iso-file" accept=".iso" class="d-none" onchange="handleISOUpload(event)">
+            </div>
+
+            <div class="row" id="iso-list-content">
+                <!-- ISO 카드들이 여기에 동적으로 추가됩니다 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- VM 생성 모달 -->
+    <div class="modal fade" id="createVMModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New VM</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-vm-form">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="vm-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">CPU Cores</label>
+                            <input type="number" class="form-control" id="vm-cores" value="1" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Memory (MB)</label>
+                            <input type="number" class="form-control" id="vm-memory" value="1024" min="512" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Installation ISO</label>
+                            <select class="form-select" id="vm-iso">
+                                <option value="">Select ISO file</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createVM()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let createVMModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            createVMModal = new bootstrap.Modal(document.getElementById('createVMModal'));
+            refreshVMList();
+            refreshISOList();
+        });
+
+        function showCreateVMModal() {
+            updateISOSelect();
+            createVMModal.show();
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('d-none');
+            });
+            document.getElementById(sectionId).classList.remove('d-none');
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        async function handleISOUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('iso', file);
+
+            try {
+                const response = await fetch('/api/isos', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    refreshISOList();
+                    event.target.value = '';
+                } else {
+                    const error = await response.text();
+                    alert(`Failed to upload ISO: ${error}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function refreshVMList() {
+            try {
+                const response = await fetch('/api/vms');
+                const vms = await response.json();
+
+                const listContent = document.getElementById('vm-list-content');
+                listContent.innerHTML = vms.map(vm => `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card vm-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title">${vm.name}</h5>
+                                    <span class="status-badge bg-${getStatusColor(vm.state)}">${vm.state}</span>
+                                </div>
+                                <div class="card-text mt-3">
+                                    <div><i class="bi bi-cpu"></i> ${vm.cores} Cores</div>
+                                    <div><i class="bi bi-memory"></i> ${vm.memory} MB</div>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="stopVM('${vm.name}')">
+                                        Stop
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteVM('${vm.name}')">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to fetch VM list:', error);
+            }
+        }
+
+        async function refreshISOList() {
+            try {
+                const response = await fetch('/api/isos');
+                const isos = await response.json();
+
+                const listContent = document.getElementById('iso-list-content');
+                listContent.innerHTML = isos.map(iso => `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${iso.name}</h5>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        Size: ${formatFileSize(iso.size)}<br>
+                                        Uploaded: ${new Date(iso.uploadedAt).toLocaleString()}
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to fetch ISO list:', error);
+            }
+        }
+
+        async function updateISOSelect() {
+            try {
+                const response = await fetch('/api/isos');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch ISO list');
+                }
+                const isos = await response.json();
+                const isoSelect = document.getElementById('vm-iso');
+                isoSelect.innerHTML = '<option value="">Select ISO file</option>';
+                isos.forEach(iso => {
+                    isoSelect.innerHTML += `<option value="${iso.name}">${iso.name}</option>`;
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function createVM() {
+            const name = document.getElementById('vm-name').value;
+            const cores = parseInt(document.getElementById('vm-cores').value);
+            const memory = parseInt(document.getElementById('vm-memory').value);
+            const iso = document.getElementById('vm-iso').value;
+
+            fetch('/api/vms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, cores, memory, iso })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text); });
+                }
+                return response.json();
+            })
+            .then(() => {
+                createVMModal.hide();
+                refreshVMList();
+            })
+            .catch(err => alert(`Failed to create VM: ${err.message}`));
+        }
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 'running': return 'success';
+                case 'stopped': return 'secondary';
+                case 'failed': return 'danger';
+                default: return 'warning';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+
+        function stopVM(vmName) {
+            fetch(`/api/vms/${vmName}/stop`, { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) { return response.text().then(text => { throw new Error(text); }); }
+                    refreshVMList();
+                })
+                .catch(err => alert(`Failed to stop VM: ${err.message}`));
+        }
+
+        function deleteVM(vmName) {
+            fetch(`/api/vms/${vmName}`, { method: 'DELETE' })
+                .then(response => {
+                    if (!response.ok) { return response.text().then(text => { throw new Error(text); }); }
+                    refreshVMList();
+                })
+                .catch(err => alert(`Failed to delete VM: ${err.message}`));
+        }
+
+        // VM 관련 함수들은 이전과 동일
+        // createVM, stopVM, deleteVM 함수는 변경 없음
+    </script>
+</body>
+</html>
