@@ -43,7 +43,14 @@ func (app *App) HandleVMs(w http.ResponseWriter, r *http.Request) {
 				app.handleGetVNCPort(w, r, vmName)
 				return
 			}
+		case "state":
+            if r.Method == http.MethodGet {
+                app.handleGetVMState(w, r, pathParts[0])
+                return
+            }
 		}
+		
+		
 	}
  
 	// Check if it's a DELETE for that VM

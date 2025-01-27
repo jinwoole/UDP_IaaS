@@ -72,7 +72,6 @@ func StartVM(conn *libvirtgo.Connect, name string) error {
 
     return nil
 }
-
 func GetVNCPort(conn *libvirtgo.Connect, name string) (int, error) {
     domain, err := conn.LookupDomainByName(name)
     if err != nil {
@@ -109,45 +108,56 @@ func GetVNCPort(conn *libvirtgo.Connect, name string) (int, error) {
 }
 
 // StopVM stops a running VM
+// vmOps.go StopVM 함수 수정
+// vmOps.go
 func StopVM(conn *libvirtgo.Connect, name string) error {
-	domain, err := conn.LookupDomainByName(name)
-	if err != nil {
-		return fmt.Errorf("failed to find domain: %w", err)
-	}
-	defer domain.Free()
+    domain, err := conn.LookupDomainByName(name)
+    if err != nil {
+        return fmt.Errorf("failed to find domain: %w", err)
+    }
+    defer domain.Free()
 
-	state, _, err := domain.GetState()
-	if err != nil {
-		return fmt.Errorf("failed to get domain state: %w", err)
-	}
+    initialState, _, err := domain.GetState()
+    if err != nil {
+        return fmt.Errorf("failed to get domain state: %w", err)
+    }
 
-	if state == libvirtgo.DOMAIN_SHUTOFF {
-		return nil
-	}
+    if initialState == libvirtgo.DOMAIN_SHUTOFF {
+        return nil
+    }
 
-	// 정상 종료 시도
-	if err := domain.Shutdown(); err != nil {
-		return fmt.Errorf("failed to shutdown domain: %w", err)
-	}
+    // 정상 종료 시도
+    if err := domain.Shutdown(); err != nil {
+        return fmt.Errorf("failed to shutdown domain: %w", err)
+    }
 
-	// 최대 30초 대기
-	for i := 0; i < 30; i++ {
-		state, _, err := domain.GetState()
-		if err != nil {
-			return fmt.Errorf("failed to get domain state: %w", err)
-		}
-		if state == libvirtgo.DOMAIN_SHUTOFF {
-			return nil
-		}
-		time.Sleep(time.Second)
-	}
+    // 최대 30초 대기하면서 상태 확인
+    for i := 0; i < 30; i++ {
+        state, _, err := domain.GetState()
+        if err != nil {
+            return fmt.Errorf("failed to get domain state: %w", err)
+        }
+        if state == libvirtgo.DOMAIN_SHUTOFF {
+            return nil
+        }
+        time.Sleep(time.Second)
+    }
 
-	// 강제 종료
-	if err := domain.Destroy(); err != nil {
-		return fmt.Errorf("failed to force stop domain: %w", err)
-	}
+    // 강제 종료 시도
+    if err := domain.Destroy(); err != nil {
+        return fmt.Errorf("failed to force stop domain: %w", err)
+    }
 
-	return nil
+    // 강제 종료 후 상태 한번 더 확인
+    finalState, _, err := domain.GetState()
+    if err != nil {
+        return fmt.Errorf("failed to get final domain state: %w", err)
+    }
+    if finalState != libvirtgo.DOMAIN_SHUTOFF {
+        return fmt.Errorf("failed to stop domain: unexpected final state %v", finalState)
+    }
+
+    return nil
 }
 
 // DeleteVM deletes an existing VM

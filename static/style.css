@@ -113,26 +113,56 @@ input, select {
     background: #5a6268;
 }
 
+/* style.css */
 .status {
     display: inline-block;
     padding: 0.25rem 0.5rem;
     border-radius: 3px;
     font-size: 0.875rem;
-}
-
-.status-running { 
+ }
+ 
+ .status-running { 
     background: #d4edda; 
     color: #155724; 
-}
-
-.status-stopped { 
+ }
+ 
+ .status-stopped { 
     background: #f8d7da; 
     color: #721c24; 
-}
-
-.status-paused { 
+ }
+ 
+ .status-paused { 
     background: #fff3cd; 
     color: #856404; 
+ }
+ 
+ .status-stopping {
+    background: #cce5ff;
+    color: #004085;
+    animation: pulse 2s infinite;
+}
+
+.status-deleting {
+    background: #e2e3e5;
+    color: #383d41;
+    animation: pulse 2s infinite;
+}
+
+.status-starting {
+    background: #d4edda;
+    color: #155724;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
 }
 
 .modal {
