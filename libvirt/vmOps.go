@@ -1,6 +1,7 @@
 package libvirt
 
 import (
+	"encoding/xml"
 	"fmt"
 	"log"
 	"os"
@@ -79,8 +80,32 @@ func GetVNCPort(conn *libvirtgo.Connect, name string) (int, error) {
     }
     defer domain.Free()
 
-    // VNC 포트는 5900부터 순차적으로 할당됨
-    return 5900, nil
+    // XML 설정 가져오기
+    xmlDesc, err := domain.GetXMLDesc(0)
+    if err != nil {
+        return 0, fmt.Errorf("failed to get domain XML: %w", err)
+    }
+
+    // XML 파싱을 위한 구조체 정의
+    type GraphicsPort struct {
+        XMLName xml.Name `xml:"domain"`
+        Devices struct {
+            Graphics struct {
+                Port int `xml:"port,attr"`
+            } `xml:"graphics"`
+        } `xml:"devices"`
+    }
+
+    var config GraphicsPort
+    if err := xml.Unmarshal([]byte(xmlDesc), &config); err != nil {
+        return 0, fmt.Errorf("failed to parse domain XML: %w", err)
+    }
+
+    if config.Devices.Graphics.Port <= 0 {
+        return 0, fmt.Errorf("VNC port not assigned yet")
+    }
+
+    return config.Devices.Graphics.Port, nil
 }
 
 // StopVM stops a running VM

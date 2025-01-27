@@ -1,31 +1,40 @@
 package types
 
-import "libvirt.org/go/libvirt"
+import (
+	"os/exec"
+	"sync"
+)
 
-// App holds references to external services or connections
-type App struct {
-    Libvirt *libvirt.Connect
-    StartWebsockify func(int) error
+// WebsockifyManager manages websockify processes
+type WebsockifyManager struct {
+    processes map[int]*exec.Cmd
+    mu        sync.Mutex
 }
 
 // CreateVMRequest defines the incoming JSON body for VM creation
 type CreateVMRequest struct {
-	Name    string `json:"name"`
-	Cores   int    `json:"cores"`
-	Memory  int    `json:"memory"`
-	ISOName string `json:"iso"` // Changed from ISO to ISOName to match usage
+    Name    string `json:"name"`
+    Cores   int    `json:"cores"`
+    Memory  int    `json:"memory"`
+    ISOName string `json:"iso"`
 }
 
 // VM represents a virtual machine status
 type VM struct {
-	Name   string `json:"name"`
-	Cores  int    `json:"cores"`
-	Memory int    `json:"memory"`
-	State  string `json:"state"`
+    Name   string `json:"name"`
+    Cores  int    `json:"cores"`
+    Memory int    `json:"memory"`
+    State  string `json:"state"`
 }
 
 // ISO describes an uploaded ISO file
 type ISO struct {
-	Name string `json:"name"`
-	Size int64  `json:"size"`
+    Name string `json:"name"`
+    Size int64  `json:"size"`
+}
+
+// VNCInfo represents VNC connection information
+type VNCInfo struct {
+    Port int    `json:"port"`
+    Host string `json:"host"`
 }
