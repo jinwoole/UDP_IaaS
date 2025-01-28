@@ -9,7 +9,7 @@ func generateVMXML(name string, memory int, cores int, diskPath string, isoPath 
         <disk type='file' device='cdrom'>
             <driver name='qemu' type='raw' cache='none' io='native'/>
             <source file='%s'/>
-            <target dev='hdc' bus='ide'/>
+            <target dev='sda' bus='sata'/>
             <readonly/>
         </disk>`, isoPath)
     }
@@ -26,18 +26,6 @@ func generateVMXML(name string, memory int, cores int, diskPath string, isoPath 
     <features>
         <acpi/>
         <apic/>
-        <hyperv>
-            <relaxed state='on'/>
-            <vapic state='on'/>
-            <spinlocks state='on' retries='8191'/>
-            <vpindex state='on'/>
-            <runtime state='on'/>
-            <synic state='on'/>
-            <stimer state='on'/>
-            <reset state='on'/>
-            <vendor_id state='on' value='123456789ab'/>
-            <frequencies state='on'/>
-        </hyperv>
         <kvm>
             <hidden state='on'/>
         </kvm>

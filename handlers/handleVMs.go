@@ -26,31 +26,34 @@ func (app *App) HandleVMs(w http.ResponseWriter, r *http.Request) {
 	}
 	vmName := pathParts[0]
 
-	if len(pathParts) == 2 {
-		switch pathParts[1] {
-		case "stop":
-			if r.Method == http.MethodPost {
-				app.handleStopVM(w, r, vmName)
-				return
-			}
-		case "start":
-			if r.Method == http.MethodPost {
-				app.handleStartVM(w, r, vmName)
-				return
-			}
-		case "vnc":
-			if r.Method == http.MethodGet {
-				app.handleGetVNCPort(w, r, vmName)
-				return
-			}
-		case "state":
-            if r.Method == http.MethodGet {
-                app.handleGetVMState(w, r, pathParts[0])
+    if len(pathParts) == 2 {
+        switch pathParts[1] {
+        case "stop":
+            if r.Method == http.MethodPost {
+                app.handleStopVM(w, r, vmName)
                 return
             }
-		}
-		
-		
+        case "start":
+            if r.Method == http.MethodPost {
+                app.handleStartVM(w, r, vmName)
+                return
+            }
+        case "vnc":
+            if r.Method == http.MethodGet {
+                app.handleGetVNCPort(w, r, vmName)
+                return
+            }
+        case "state":
+            if r.Method == http.MethodGet {
+                app.handleGetVMState(w, r, vmName)
+                return
+            }
+        case "detach-iso":  // 새로운 엔드포인트 추가
+            if r.Method == http.MethodPost {
+                app.handleDetachISO(w, r, vmName)
+                return
+            }
+        }
 	}
  
 	// Check if it's a DELETE for that VM
